@@ -67,17 +67,20 @@ def itemrank(data, alpha, prec):
                 if mrated[0].id != m.id:
                     CM[m.id - 1][mrated[0].id - 1] += 1
 
-    "check if that's right in the paper"
-    for c in range(len(CM[1,:])):
+    # divide each element by the sum of elements of its column
+    # this way C is a stochastic matrix
+    for c in range(len(CM[0,:])):
         CM[:,c] /= sum(CM[:,c])
 
     # Prediction of movie ranking
     pred = np.zeros((nuser, nmovie))
     k = 0
     for u in user_list:
-        "need to normalize ?"
+        "not normalized in algo, normalized in paper"
         d = u.all_movies
-        IR = np.ones(nmovie)
+        d /= np.linalg.norm(d)
+        "ones in algo, ones normalized in paper"
+        IR = np.ones(nmovie) / nmovie
         converged = False
         ite = 0
         while not converged:
@@ -89,8 +92,26 @@ def itemrank(data, alpha, prec):
         pred[k] = IR
         k += 1
 
+    # find the maximum and the minimum values of pred
+    maxi = 0
+    mini = 1
+    for i in range(nuser):
+        if max(pred[i]) > maxi:
+            maxi = max(pred[i])
+        if min(pred[i]) < mini:
+            mini = min(pred[i])
+
+    # transform the ranking values into ratings
+    for i in range(nuser):
+        for j in range(nmovie):
+            pred[i][j] = transform_to_ratings(maxi, mini, pred[i][j])
+
     return pred
 
+def transform_to_ratings(maximum, minimum, value):
+    #  f(a)=c and f(b)=d)
+    # f(t) = c + (d-c)/(b-a) * (t-a)
+    return int(round(1 + 4/(maximum - minimum) * (value - minimum)))
 
 ######################## test zone ############################
 
@@ -101,8 +122,13 @@ def itemrank(data, alpha, prec):
 links_df = pd.read_csv("ml-100k/u.data", sep="\t", header = 0, names = ["userId", "movieId", "rating", "timeStamp"], index_col=False)
 movie_ratings_df=links_df.pivot_table(index='movieId',columns='userId',values='rating').fillna(0)
 
+nmovie, nuser = movie_ratings_df.shape
+prediction = itemrank(movie_ratings_df, 0.85, 0.01)
 
-prediction = itemrank(movie_ratings_df, 0.85, 0.0001)
 
 print(prediction)
 
+" to do next :" \
+"- allow matrix to be passed as an argument" \
+"- make the result like the ratings" \
+"- check the original paper if the method is well used (normalization, alpha value, correlation matrix, etc"
