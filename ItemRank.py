@@ -33,23 +33,26 @@ class Movie(object):
         self.n_ratings = len(self.ratings_recieved)
 
 def itemrank(data, alpha, prec):
+    """
+    :param data: a dataframe of ratings of size (nuser, nmovie)
+    :param alpha:
+    :param prec: thresholf for convergence
+    :return:
+    """
     movie_list = []           # list of all the movies as object with initially only their id
     user_list = []            # list of all the users as object with initially only their id
 
-    # nmovie, nuser = movie_ratings_df.shape
-    nmovie, nuser = data.shape
+    nuser, nmovie = data.shape
 
     for m in range(nmovie):
         id = m+1
-        "data change needed"
-        all_users = data.T[id].to_numpy()
+        all_users = data[id].to_numpy()    # all ratings data (recieved or not) for movie_id = id
         movie = Movie(id, all_users)
         movie_list.append(movie)
 
     for u in range(nuser):
         id = u+1
-        "data change needed"
-        all_movies =  data[id].to_numpy()
+        all_movies =  data.T[id].to_numpy()    # all ratings data (given or not) for user_id = id
         user = User(id, all_movies)
         user_list.append(user)
 
@@ -104,15 +107,50 @@ def itemrank(data, alpha, prec):
     # transform the ranking values into ratings
     for i in range(nuser):
         for j in range(nmovie):
-            pred[i][j] = transform_to_ratings(maxi, mini, pred[i][j])
+            # pred[i][j] = transform_to_ratings_to_int(maxi, mini, pred[i][j])
+            pred[i][j] = transform_to_ratings_to_int(maxi, mini, pred[i][j])
 
     return pred
 
 def transform_to_ratings(maximum, minimum, value):
-    #  f(a)=c and f(b)=d)
+    #  f(a)=c and f(b)=d
+    # f(t) = c + (d-c)/(b-a) * (t-a)
+    return 1 + 4/(maximum - minimum) * (value - minimum)
+
+def transform_to_ratings_to_int(maximum, minimum, value):
+    #  f(a)=c and f(b)=d
     # f(t) = c + (d-c)/(b-a) * (t-a)
     return int(round(1 + 4/(maximum - minimum) * (value - minimum)))
 
+def compute_MSE(np_ratings, np_preds):
+    ratings_flat = np_ratings.flatten()
+    preds_flat = np_preds.flatten()
+    mse_tot = 0
+    nb_ratings = 0
+
+    for i in range(len(ratings_flat)):
+        # if the rating is available
+        if (ratings_flat[i] > 0):
+            diff = (ratings_flat[i] - preds_flat[i])**2
+            mse_tot += diff
+            nb_ratings += 1
+
+    return mse_tot/nb_ratings
+
+def compute_MAE(np_ratings, np_preds):
+    ratings_flat = np_ratings.flatten()
+    preds_flat = np_preds.flatten()
+    mae_tot = 0
+    nb_ratings = 0
+
+    for i in range(len(ratings_flat)):
+        # if the rating is available
+        if (ratings_flat[i] > 0):
+            diff = abs(ratings_flat[i] - preds_flat[i])
+            mae_tot += diff
+            nb_ratings += 1
+
+    return mae_tot/nb_ratings
 ######################## test zone ############################
 
 "This data set consists of:\
@@ -120,15 +158,43 @@ def transform_to_ratings(maximum, minimum, value):
 * Each user has rated at least 20 movies. "
 
 links_df = pd.read_csv("ml-100k/u.data", sep="\t", header = 0, names = ["userId", "movieId", "rating", "timeStamp"], index_col=False)
-movie_ratings_df=links_df.pivot_table(index='movieId',columns='userId',values='rating').fillna(0)
+movie_ratings_df=links_df.pivot_table(index='movieId',columns='userId',values='rating').fillna(0).T
+data_df = pd.DataFrame.copy(movie_ratings_df)
 
-nmovie, nuser = movie_ratings_df.shape
-prediction = itemrank(movie_ratings_df, 0.85, 0.01)
 
+prediction = itemrank(movie_ratings_df, 0.85 , 0.0001)
 
 print(prediction)
 
+
+mse = compute_MSE(data_df.to_numpy(), prediction)
+mae = compute_MAE(data_df.to_numpy(), prediction)
+print(mse)
+print(mae)
+
+
+# IDEA CROSS VALIDATION
+# for i in range(10):
+#     # add seletion of 90-10% of the data
+#     links_df = pd.read_csv("ml-100k/u.data", sep="\t", header = 0, names = ["userId", "movieId", "rating", "timeStamp"], index_col=False)
+#     movie_ratings_df=links_df.pivot_table(index='movieId',columns='userId',values='rating').fillna(0).T
+#     data_df = pd.DataFrame.copy(movie_ratings_df)
+#
+#     training_set = 0
+#     test_set = 1
+#
+#     prediction_itemrank = itemrank(training_set, 0.85 , 0.0001)
+#     prediction_knn = knn(training_set, k)
+#
+#     itemrank_mse = compute_MSE(test_set, prediction_itemrank)
+#     knn_mse = compute_MSE(test_set, prediction_knn)
+#
+#     itemrank_mae = compute_MAE(test_set, prediction_itemrank)
+#     knn_mae = compute_MAE(test_set, prediction_knn)
+
+
 " to do next :" \
-"- allow matrix to be passed as an argument" \
-"- make the result like the ratings" \
-"- check the original paper if the method is well used (normalization, alpha value, correlation matrix, etc"
+"- check the original paper if the method is well used (normalization, alpha value, correlation matrix, etc" \
+" add possibility to choose format of ratings (real numbers or integers"
+" make plots of mse and mae for differents values of alpha and threshold"
+
