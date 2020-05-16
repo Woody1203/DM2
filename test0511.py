@@ -232,11 +232,13 @@ def ub_knn_para_tuning():
 def run_ubknn(n):
     filepath = "ml-100k/u.data"
     trainning_data, testing_data = data_split(filepath)
-    ub_pred, test = ub_knn_test(trainning_data, testing_data, n)
-    print(ub_pred)
-    print(test)
-    print('MSE for neighbour size ' + str(n) + ' is ' + str(mse(ub_pred, test)))
-    print('MAE for neighbour size ' + str(n) + ' is ' + str(mae(ub_pred, test)))
+    print(trainning_data)
+    print(testing_data)
+    # ub_pred, test = ub_knn_test(trainning_data, testing_data, n)
+    # print(ub_pred)
+    # print(test)
+    # print('MSE for neighbour size ' + str(n) + ' is ' + str(mse(ub_pred, test)))
+    # print('MAE for neighbour size ' + str(n) + ' is ' + str(mae(ub_pred, test)))
 
 if __name__ == '__main__':
 
