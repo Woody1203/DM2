@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from sklearn.model_selection import KFold
 
 
 class User(object):
@@ -73,7 +74,8 @@ def itemrank(data, alpha, prec):
     # divide each element by the sum of elements of its column
     # this way C is a stochastic matrix
     for c in range(len(CM[0,:])):
-        CM[:,c] /= sum(CM[:,c])
+        if (sum(CM[:,c]) != 0):
+            CM[:,c] /= sum(CM[:,c])
 
     # Prediction of movie ranking
     pred = np.zeros((nuser, nmovie))
@@ -151,50 +153,95 @@ def compute_MAE(np_ratings, np_preds):
             nb_ratings += 1
 
     return mae_tot/nb_ratings
-######################## test zone ############################
 
-"This data set consists of:\
-* 100,000 ratings (1-5) from 943 users on 1682 movies.\
-* Each user has rated at least 20 movies. "
+def full_prediction():
+    "This data set consists of:\
+    * 100,000 ratings (1-5) from 943 users on 1682 movies.\
+    * Each user has rated at least 20 movies. "
+    links_df = pd.read_csv("ml-100k/u.data", sep="\t", header = 0, names = ["userId", "movieId", "rating", "timeStamp"], index_col=False)
+    movie_ratings_df=links_df.pivot_table(index='movieId',columns='userId',values='rating').fillna(0).T
+    data_df = pd.DataFrame.copy(movie_ratings_df)
 
-links_df = pd.read_csv("ml-100k/u.data", sep="\t", header = 0, names = ["userId", "movieId", "rating", "timeStamp"], index_col=False)
-movie_ratings_df=links_df.pivot_table(index='movieId',columns='userId',values='rating').fillna(0).T
-data_df = pd.DataFrame.copy(movie_ratings_df)
+    prediction = itemrank(movie_ratings_df, 0.85 , 0.0001)
+
+    print(prediction)
+
+    mse = compute_MSE(data_df.to_numpy(), prediction)
+    mae = compute_MAE(data_df.to_numpy(), prediction)
+    print(mse)
+    print(mae)
+
+def cross_validation():
+    "This data set consists of:\
+    * 100,000 ratings (1-5) from 943 users on 1682 movies.\
+    * Each user has rated at least 20 movies. "
+    links_df = pd.read_csv("ml-100k/u.data", sep="\t", header = 0, names = ["userId", "movieId", "rating", "timeStamp"], index_col=False)
+    movie_ratings_df=links_df.pivot_table(index='movieId',columns='userId',values='rating').fillna(0).T
+    k = 4  # number of folds for the cv
+
+    mse_train = np.zeros(k)
+    mae_train = np.zeros(k)
+    mse_test = np.zeros(k)
+    mae_test = np.zeros(k)
+
+    kf = KFold(n_splits=k)
+    i = 0
+    for train, test in kf.split(links_df):
+        print('fold ' + str(i+1))
+        train_set_links = links_df.iloc[train] # select index of the training set
+        test_set_links = links_df.iloc[test]   # select index of the test set
+
+        # training set : create the rating matrix and add the missing columns and rows; missing values are replaced by 0
+        train_set = train_set_links.pivot_table(index='movieId',columns='userId',values='rating').fillna(0).T
+        train_set = train_set.reindex(list(range(movie_ratings_df.T.index.min(),movie_ratings_df.T.index.max()+1)),fill_value=0, axis='columns')
+        train_set = train_set.reindex(list(range(movie_ratings_df.index.min(),movie_ratings_df.index.max()+1)),fill_value=0)
+        train_set = train_set.astype(float)
+
+        # test set : create the rating matrix and add the missing columns and rows; missing values are replaced by 0
+        test_set = test_set_links.pivot_table(index='movieId',columns='userId',values='rating').fillna(0).T
+        test_set = test_set.reindex(list(range(movie_ratings_df.T.index.min(),movie_ratings_df.T.index.max()+1)),fill_value=0, axis='columns')
+        test_set = test_set.reindex(list(range(movie_ratings_df.index.min(),movie_ratings_df.index.max()+1)),fill_value=0)
+        test_set = test_set.astype(float)
+
+        # prediction
+        train_df_copy = pd.DataFrame.copy(train_set)
+        prediction = itemrank(train_df_copy, 0.85 , 0.0001)
+
+        # performance evaluation on the training set
+        mse_train[i] = compute_MSE(train_set.to_numpy(), prediction)
+        mae_train[i] = compute_MAE(train_set.to_numpy(), prediction)
+        print(mse_train[i])
+        print(mae_train[i])
+        print()
+
+        # performance evaluation on the test set
+        mse_test[i] = compute_MSE(test_set.to_numpy(), prediction)
+        mae_test[i] = compute_MAE(test_set.to_numpy(), prediction)
+        print(mse_test[i])
+        print(mae_test[i])
+        print()
+
+        i += 1
+
+    mean_mse_train = mse_train.mean()
+    mean_mae_train = mae_train.mean()
+    print(mean_mse_train)
+    print(mean_mae_train)
+
+    mean_mse_test = mse_test.mean()
+    mean_mae_test = mae_test.mean()
+    print(mean_mse_test)
+    print(mean_mae_test)
 
 
-prediction = itemrank(movie_ratings_df, 0.85 , 0.0001)
-
-print(prediction)
-
-
-mse = compute_MSE(data_df.to_numpy(), prediction)
-mae = compute_MAE(data_df.to_numpy(), prediction)
-print(mse)
-print(mae)
+if __name__ == '__main__':
+    cross_validation()
+    # full_prediction()
 
 
-# IDEA CROSS VALIDATION
-# for i in range(10):
-#     # add seletion of 90-10% of the data
-#     links_df = pd.read_csv("ml-100k/u.data", sep="\t", header = 0, names = ["userId", "movieId", "rating", "timeStamp"], index_col=False)
-#     movie_ratings_df=links_df.pivot_table(index='movieId',columns='userId',values='rating').fillna(0).T
-#     data_df = pd.DataFrame.copy(movie_ratings_df)
-#
-#     training_set = 0
-#     test_set = 1
-#
-#     prediction_itemrank = itemrank(training_set, 0.85 , 0.0001)
-#     prediction_knn = knn(training_set, k)
-#
-#     itemrank_mse = compute_MSE(test_set, prediction_itemrank)
-#     knn_mse = compute_MSE(test_set, prediction_knn)
-#
-#     itemrank_mae = compute_MAE(test_set, prediction_itemrank)
-#     knn_mae = compute_MAE(test_set, prediction_knn)
 
 
 " to do next :" \
 "- check the original paper if the method is well used (normalization, alpha value, correlation matrix, etc" \
-" add possibility to choose format of ratings (real numbers or integers"
 " make plots of mse and mae for differents values of alpha and threshold"
 

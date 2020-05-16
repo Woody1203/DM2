@@ -233,15 +233,17 @@ def run_ubknn(n):
     filepath = "ml-100k/u.data"
     trainning_data, testing_data = data_split(filepath)
     ub_pred, test = ub_knn_test(trainning_data, testing_data, n)
+    print(ub_pred)
+    print(test)
     print('MSE for neighbour size ' + str(n) + ' is ' + str(mse(ub_pred, test)))
     print('MAE for neighbour size ' + str(n) + ' is ' + str(mae(ub_pred, test)))
 
 if __name__ == '__main__':
 
     ## knn parameter tuning
-    ub_knn_para_tuning()
+    # ub_knn_para_tuning()
     # run knn with specific k
-    #run_ubknn(10)
+    run_ubknn(10)
 
 
     # this one is to run the knn with n = 30
