@@ -139,7 +139,6 @@ def kfold_cross_validation():
         print(mae_test_ubknn[i])
         print()
 
-
         i += 1
 
     # mean results for itemrank
