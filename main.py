@@ -3,6 +3,7 @@ import pandas as pd
 from sklearn.model_selection import KFold
 from ItemRank import itemrank
 from test0511 import ub_knn_test
+import time
 
 def compute_MSE(np_ratings, np_preds):
     ratings_flat = np_ratings.flatten()
@@ -37,23 +38,33 @@ def compute_MAE(np_ratings, np_preds):
 def baseline(A, B):
     A = pd.pivot_table(A,values='rating',index='userId',columns='movieId')
     A.loc['mean'] = A.mean()
-    print(A)
-    data = A.drop(['mean'])
+    A = A.fillna(0)
+    # data = A.drop(['mean'])
     nmovie, nuser = B.shape
     pred = np.zeros((nmovie,nuser))
     # print(nmovie, nuser)
 
     list_loc = list(B.stack().index)
-    print("this is A[loc]", A.loc['mean'])
+    # print("this is A[loc]", A.loc['mean'])
+
     mark = 0
+
     for i,j in list_loc:
         mark += 1
-        print("this is mark", mark)
-        print("this is i", i)
-        print("this is j", j)
-        print("this is pred[i-1][j-1]", pred[i-1][j-1])
-        print("this is A.loc['mean'][j]", A.loc['mean'][j])
-        pred[i-1][j-1] = A.loc['mean'][j]
+        # print("this is mark", mark)
+        # print("this is i", i)
+        # print("this is j", j)
+        # print("this is pred[i-1][j-1]", pred[i-1][j-1])
+        # print("this is A.loc['mean'][j]", A.loc['mean'][j])
+
+        # pred[i-1][j-1] = 0
+
+        try:
+            pred[i-1][j-1] = A.loc['mean'][j]
+            # print("location", i, j)
+            # print(pred[i-1][j-1])
+        except:
+            pred[i-1][j-1] = 0
     return pred
 
 def kfold_cross_validation():
@@ -68,6 +79,11 @@ def kfold_cross_validation():
     mae_train_itemrank = np.zeros(k)
     mse_test_itemrank = np.zeros(k)
     mae_test_itemrank = np.zeros(k)
+
+    mse_train_baseline = np.zeros(k)
+    mae_train_baseline = np.zeros(k)
+    mse_test_baseline = np.zeros(k)
+    mae_test_baseline = np.zeros(k)
 
     mse_train_ubknn = np.zeros(k)
     mae_train_ubknn = np.zeros(k)
@@ -91,7 +107,6 @@ def kfold_cross_validation():
         train_set = train_set.astype(float)
         # print("this is train_set", train_set)
 
-
         # test set : create the rating matrix and add the missing columns and rows; missing values are replaced by 0
         test_set = test_set_links.pivot_table(index='movieId',columns='userId',values='rating').fillna(0).T
         test_set = test_set.reindex(list(range(movie_ratings_df.T.index.min(),movie_ratings_df.T.index.max()+1)),fill_value=0, axis='columns')
@@ -99,70 +114,79 @@ def kfold_cross_validation():
         test_set = test_set.astype(float)
         # print("this is test_set",test_set)
 
+## test
+        # print("test")
+
         ## baseline
         print("baseline start")
+
+        start_time = time.time()
+
         prediction_baseline = baseline(train_set_links, test_set)
 
+        elapsed_time = time.time() - start_time
+        print("********************************** the code finished in : " + str(elapsed_time/60) + " minutes*********")
+
         # performance evaluation on the training set
-        mse_train_baseline[i] = compute_MSE(train_set_zeros.to_numpy(), prediction_baseline)
-        mae_train_baseline[i] = compute_MAE(train_set_zeros.to_numpy(), prediction_baseline)
+        mse_train_baseline[i] = compute_MSE(train_set.to_numpy(), prediction_baseline)
+        mae_train_baseline[i] = compute_MAE(train_set.to_numpy(), prediction_baseline)
         print("trainset mse result of baseline", mse_train_baseline[i])
         print("trainset mse result of baseline", mae_train_baseline[i])
         print()
 
         # performance evaluation on the test set
         mse_test_baseline[i] = compute_MSE(test_set.to_numpy(), prediction_baseline)
-        mae_test_basseline[i] = compute_MAE(test_set.to_numpy(), prediction_baseline)
+        mae_test_baseline[i] = compute_MAE(test_set.to_numpy(), prediction_baseline)
         print("testset mse result of baseline", mse_test_baseline[i])
         print("testset mae result of baseline", mae_test_baseline[i])
         print()
         print("baseline fini")
 
-        ### Itemrank prediction
-        train_set_zeros = train_set.fillna(0) # NaN -> 0
-        train_set_zeros_copy = pd.DataFrame.copy(train_set_zeros)
-        prediction_itemrank = itemrank(train_set_zeros_copy, 0.85 , 0.0001)
-        print(prediction_itemrank)
+        # ### Itemrank prediction
+        # train_set_zeros = train_set.fillna(0) # NaN -> 0
+        # train_set_zeros_copy = pd.DataFrame.copy(train_set_zeros)
+        # prediction_itemrank = itemrank(train_set_zeros_copy, 0.85 , 0.0001)
+        # print(prediction_itemrank)
+        #
+        # # performance evaluation on the training set
+        # mse_train_itemrank[i] = compute_MSE(train_set_zeros.to_numpy(), prediction_itemrank)
+        # mae_train_itemrank[i] = compute_MAE(train_set_zeros.to_numpy(), prediction_itemrank)
+        # print("trainset mse result of itemrank", mse_train_itemrank[i])
+        # print("trainset mse result of itemrank", mae_train_itemrank[i])
+        # print()
+        #
+        # # performance evaluation on the test set
+        # mse_test_itemrank[i] = compute_MSE(test_set.to_numpy(), prediction_itemrank)
+        # mae_test_itemrank[i] = compute_MAE(test_set.to_numpy(), prediction_itemrank)
+        # print("testset mse result of itemrank", mse_test_itemrank[i])
+        # print("testset mae result of itemrank", mae_test_itemrank[i])
+        # print()
 
-        # performance evaluation on the training set
-        mse_train_itemrank[i] = compute_MSE(train_set_zeros.to_numpy(), prediction_itemrank)
-        mae_train_itemrank[i] = compute_MAE(train_set_zeros.to_numpy(), prediction_itemrank)
-        print("trainset mse result of itemrank", mse_train_itemrank[i])
-        print("trainset mse result of itemrank", mae_train_itemrank[i])
-        print()
-
-        # performance evaluation on the test set
-        mse_test_itemrank[i] = compute_MSE(test_set.to_numpy(), prediction_itemrank)
-        mae_test_itemrank[i] = compute_MAE(test_set.to_numpy(), prediction_itemrank)
-        print("testset mse result of itemrank", mse_test_itemrank[i])
-        print("testset mae result of itemrank", mae_test_itemrank[i])
-        print()
-
-        ### User-based knn prediction
-        train_set_copy = pd.DataFrame.copy(train_set)
-        print("this is train_set_copy", train_set_copy)
-        print("this is train_set_links", train_set_links)
-        print("****************this is train_set", train_set_copy)
-        print("*****************this is test_set", test_set)
-        #******************** train_set_copy or test dataset***********
-        prediction_ubknn, testing = ub_knn_test(train_set_links, test_set, 10)
-        print("finish ubknn")
-        print(prediction_ubknn)
-
-        # performance evaluation on the training set
-        mse_train_ubknn[i] = compute_MSE(train_set_zeros.to_numpy(), prediction_ubknn)
-        mae_train_ubknn[i] = compute_MAE(train_set_zeros.to_numpy(), prediction_ubknn)
-        print("trainset mse result of ubknn",mse_train_ubknn[i])
-        print("trainset mae result of ubknn",mae_train_ubknn[i])
-        print()
+        # ### User-based knn prediction
+        # train_set_copy = pd.DataFrame.copy(train_set)
+        # print("this is train_set_copy", train_set_copy)
+        # print("this is train_set_links", train_set_links)
+        # print("****************this is train_set", train_set_copy)
+        # print("*****************this is test_set", test_set)
+        # #******************** train_set_copy or test dataset***********
+        # prediction_ubknn, testing = ub_knn_test(train_set_links, test_set, 10)
+        # print("finish ubknn")
+        # print(prediction_ubknn)
+        #
+        # # performance evaluation on the training set
+        # mse_train_ubknn[i] = compute_MSE(train_set_zeros.to_numpy(), prediction_ubknn)
+        # mae_train_ubknn[i] = compute_MAE(train_set_zeros.to_numpy(), prediction_ubknn)
+        # print("trainset mse result of ubknn",mse_train_ubknn[i])
+        # print("trainset mae result of ubknn",mae_train_ubknn[i])
+        # print()
 
 
-        # performance evaluation on the test set
-        mse_test_ubknn[i] = compute_MSE(test_set.to_numpy(), prediction_ubknn)
-        mae_test_ubknn[i] = compute_MAE(test_set.to_numpy(), prediction_ubknn)
-        print("testset mse result of ubknn", mse_test_ubknn[i])
-        print("testset mse result of ubknn", mae_test_ubknn[i])
-        print()
+        # # performance evaluation on the test set
+        # mse_test_ubknn[i] = compute_MSE(test_set.to_numpy(), prediction_ubknn)
+        # mae_test_ubknn[i] = compute_MAE(test_set.to_numpy(), prediction_ubknn)
+        # print("testset mse result of ubknn", mse_test_ubknn[i])
+        # print("testset mse result of ubknn", mae_test_ubknn[i])
+        # print()
 
 
         i += 1
