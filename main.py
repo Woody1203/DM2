@@ -34,12 +34,34 @@ def compute_MAE(np_ratings, np_preds):
 
     return mae_tot/nb_ratings
 
+def baseline(A, B):
+    A = pd.pivot_table(A,values='rating',index='userId',columns='movieId')
+    A.loc['mean'] = A.mean()
+    print(A)
+    data = A.drop(['mean'])
+    nmovie, nuser = B.shape
+    pred = np.zeros((nmovie,nuser))
+    # print(nmovie, nuser)
+
+    list_loc = list(B.stack().index)
+    print("this is A[loc]", A.loc['mean'])
+    mark = 0
+    for i,j in list_loc:
+        mark += 1
+        print("this is mark", mark)
+        print("this is i", i)
+        print("this is j", j)
+        print("this is pred[i-1][j-1]", pred[i-1][j-1])
+        print("this is A.loc['mean'][j]", A.loc['mean'][j])
+        pred[i-1][j-1] = A.loc['mean'][j]
+    return pred
+
 def kfold_cross_validation():
     "This data set consists of:\
     * 100,000 ratings (1-5) from 943 users on 1682 movies.\
     * Each user has rated at least 20 movies. "
     links_df = pd.read_csv("ml-100k/u.data", sep="\t", header = 0, names = ["userId", "movieId", "rating", "timeStamp"], index_col=False)
-    movie_ratings_df=links_df.pivot_table(index='movieId',columns='userId',values='rating').fillna(0).T
+    movie_ratings_df=links_df.pivot_table(index='movieId',columns='userId',values='rating').T
     k = 4  # number of folds for the cv
 
     mse_train_itemrank = np.zeros(k)
@@ -78,29 +100,29 @@ def kfold_cross_validation():
         ### Itemrank prediction
         train_set_zeros = train_set.fillna(0) # NaN -> 0
         train_set_zeros_copy = pd.DataFrame.copy(train_set_zeros)
-        prediction_itemrank = itemrank(train_set_zeros_copy, 0.85 , 0.0001)
-        print(prediction_itemrank)
-
-        # performance evaluation on the training set
-        mse_train_itemrank[i] = compute_MSE(train_set_zeros.to_numpy(), prediction_itemrank)
-        mae_train_itemrank[i] = compute_MAE(train_set_zeros.to_numpy(), prediction_itemrank)
-        print(mse_train_itemrank[i])
-        print(mae_train_itemrank[i])
-        print()
-
-        # performance evaluation on the test set
-        mse_test_itemrank[i] = compute_MSE(test_set.to_numpy(), prediction_itemrank)
-        mae_test_itemrank[i] = compute_MAE(test_set.to_numpy(), prediction_itemrank)
-        print(mse_test_itemrank[i])
-        print(mae_test_itemrank[i])
-        print()
+        # prediction_itemrank = itemrank(train_set_zeros_copy, 0.85 , 0.0001)
+        # print(prediction_itemrank)
+        #
+        # # performance evaluation on the training set
+        # mse_train_itemrank[i] = compute_MSE(train_set_zeros.to_numpy(), prediction_itemrank)
+        # mae_train_itemrank[i] = compute_MAE(train_set_zeros.to_numpy(), prediction_itemrank)
+        # print(mse_train_itemrank[i])
+        # print(mae_train_itemrank[i])
+        # print()
+        #
+        # # performance evaluation on the test set
+        # mse_test_itemrank[i] = compute_MSE(test_set.to_numpy(), prediction_itemrank)
+        # mae_test_itemrank[i] = compute_MAE(test_set.to_numpy(), prediction_itemrank)
+        # print(mse_test_itemrank[i])
+        # print(mae_test_itemrank[i])
+        # print()
 
 
         ### User-based knn prediction
         train_set_copy = pd.DataFrame.copy(train_set)
-        print(train_set_copy)
+        print(movie_ratings_df)
         print(train_set_links)
-        prediction_ubknn, testing = ub_knn_test(train_set_links, train_set_copy, 10)
+        prediction_ubknn, testing = ub_knn_test(train_set_links, movie_ratings_df, 10)
         print(prediction_ubknn)
 
         # performance evaluation on the training set

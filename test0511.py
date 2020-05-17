@@ -113,7 +113,7 @@ class ubknn():
     def pred(self):
         ## store the locations with not null values
         ## for cross validation, here is the code to find the location to predict, maybe change it to test dataset's locations
-        #list_loc = list(self.final.stack().index)
+        # self.list_loc = list(self.final.stack().index)
         self.pred = np.zeros((self.nmovie,self.nuser))
         self.sim_user_30_m = find_n_neighbours(self.similarity_with_user, self.n)
         #sim_user_30_u = find_n_neighbours(similarity_with_user,30)
@@ -232,9 +232,7 @@ def ub_knn_para_tuning():
 def run_ubknn(n):
     filepath = "ml-100k/u.data"
     trainning_data, testing_data = data_split(filepath)
-    print(trainning_data)
-    print(testing_data)
-    # ub_pred, test = ub_knn_test(trainning_data, testing_data, n)
+    ub_pred, test = ub_knn_test(trainning_data, testing_data, n)
     # print(ub_pred)
     # print(test)
     # print('MSE for neighbour size ' + str(n) + ' is ' + str(mse(ub_pred, test)))
