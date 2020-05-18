@@ -246,7 +246,7 @@ def cross_validation():
 
         # prediction
         train_df_copy = pd.DataFrame.copy(train_set)
-        prediction = itemrank(train_df_copy, 0.85, 10**-4)
+        prediction = itemrank(train_df_copy, 0.95, 10**-4)
 
         # performance evaluation on the training set
         mse_train[i] = compute_MSE(train_set.to_numpy(), prediction)

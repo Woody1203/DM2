@@ -4,6 +4,7 @@ from sklearn.model_selection import KFold
 import matplotlib.pyplot as plt
 from ItemRank import itemrank
 from test0511 import ub_knn_test
+from baseline import baseline
 import time
 
 def compute_MSE(np_ratings, np_preds):
@@ -160,15 +161,12 @@ def kfold_cross_validation(k):
         ### Itemrank prediction
         print("itemrank start")
         train_set_zeros = train_set.fillna(0) # NaN -> 0
-        train_set_zeros_copy = pd.DataFrame.copy(train_set_zeros)
 
         start_time = time.time()
-        prediction_itemrank = itemrank(train_set_zeros_copy, 0.85 , 0.0001)
+        prediction_itemrank = itemrank(train_set_zeros, 0.85 , 0.0001)
         elapsed_time = time.time() - start_time
         print(prediction_itemrank)
         print("********************************** the code finished in : " + str(elapsed_time/60) + " minutes*********")
-
-        print("itemrank start")
 
         # performance evaluation on the training set
         mse_train_itemrank[i] = compute_MSE(train_set_zeros.to_numpy(), prediction_itemrank)
@@ -186,6 +184,7 @@ def kfold_cross_validation(k):
         list_time_itemrank.append(elapsed_time)
         print("testset mse result of itemrank", mse_test_itemrank[i])
         print("testset mae result of itemrank", mae_test_itemrank[i])
+
         print("itemrank finish")
         print()
 
