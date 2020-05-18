@@ -23,3 +23,6 @@ def baseline_2(ratings_matrix):
         ratings_matrix_copy[i+1] = ratings_matrix_copy[i+1].mean()
 
     return ratings_matrix_copy
+
+if __name__ == '__main__':
+    baseline()

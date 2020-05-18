@@ -33,27 +33,28 @@ class Movie(object):
                 self.ratings_recieved.append([user_list[u], self.all_users[u]])
         self.n_ratings = len(self.ratings_recieved)
 
-def itemrank(data, alpha, prec):
+def itemrank(data_df, alpha, prec):
     """
     :param data: a dataframe of ratings of size (nuser, nmovie)
     :param alpha:
     :param prec: thresholf for convergence
     :return:
     """
+    data_df_copy = pd.DataFrame.copy(data_df)
     movie_list = []           # list of all the movies as object with initially only their id
     user_list = []            # list of all the users as object with initially only their id
 
-    nuser, nmovie = data.shape
+    nuser, nmovie = data_df_copy.shape
 
     for m in range(nmovie):
         id = m+1
-        all_users = data[id].to_numpy()    # all ratings data (recieved or not) for movie_id = id
+        all_users = data_df_copy[id].to_numpy()    # all ratings data (recieved or not) for movie_id = id
         movie = Movie(id, all_users)
         movie_list.append(movie)
 
     for u in range(nuser):
         id = u+1
-        all_movies =  data.T[id].to_numpy()    # all ratings data (given or not) for user_id = id
+        all_movies =  data_df_copy.T[id].to_numpy()    # all ratings data (given or not) for user_id = id
         user = User(id, all_movies)
         user_list.append(user)
 
@@ -83,16 +84,17 @@ def itemrank(data, alpha, prec):
     for u in user_list:
         "not normalized in algo, normalized in paper"
         d = u.all_movies
-        d /= np.linalg.norm(d)
+        d_rel = d - d.mean()
+        # d_rel /= np.linalg.norm(d_rel)
         "ones in algo, ones normalized in paper"
-        IR = np.ones(nmovie) / nmovie
+        IR = np.ones(nmovie) #/ nmovie
         converged = False
         ite = 0
         while not converged:
             ite += 1
             old_IR = IR
-            IR = alpha * np.dot(CM, IR) + (1-alpha) * d
-            converged = (old_IR - IR < prec).all()
+            IR = alpha * np.dot(CM, IR) + (1-alpha) * d_rel
+            converged = ( abs(old_IR - IR) < prec ).all()
 
         pred[k] = IR
         k += 1
@@ -160,16 +162,55 @@ def full_prediction():
     * Each user has rated at least 20 movies. "
     links_df = pd.read_csv("ml-100k/u.data", sep="\t", header = 0, names = ["userId", "movieId", "rating", "timeStamp"], index_col=False)
     movie_ratings_df=links_df.pivot_table(index='movieId',columns='userId',values='rating').fillna(0).T
-    data_df = pd.DataFrame.copy(movie_ratings_df)
 
-    prediction = itemrank(movie_ratings_df, 0.85 , 0.0001)
-
+    prec =  10**-4
+    # some other param
+    prediction = itemrank(movie_ratings_df, 0.95 , 10**-4)
     print(prediction)
 
-    mse = compute_MSE(data_df.to_numpy(), prediction)
-    mae = compute_MAE(data_df.to_numpy(), prediction)
+    mse = compute_MSE(movie_ratings_df.to_numpy(), prediction)
+    mae = compute_MAE(movie_ratings_df.to_numpy(), prediction)
     print(mse)
     print(mae)
+
+    # some other param
+    prediction = itemrank(movie_ratings_df, 0.9 , 10**-4)
+    print(prediction)
+
+    mse = compute_MSE(movie_ratings_df.to_numpy(), prediction)
+    mae = compute_MAE(movie_ratings_df.to_numpy(), prediction)
+    print(mse)
+    print(mae)
+
+    # some other param
+    prediction = itemrank(movie_ratings_df, 0.85 , 10**-4)
+    print(prediction)
+
+    mse = compute_MSE(movie_ratings_df.to_numpy(), prediction)
+    mae = compute_MAE(movie_ratings_df.to_numpy(), prediction)
+    print(mse)
+    print(mae)
+
+    # some other param
+    prediction = itemrank(movie_ratings_df, 0.8 , 10**-4)
+    print(prediction)
+
+    mse = compute_MSE(movie_ratings_df.to_numpy(), prediction)
+    mae = compute_MAE(movie_ratings_df.to_numpy(), prediction)
+    print(mse)
+    print(mae)
+
+    # some other param
+    prediction = itemrank(movie_ratings_df, 0.75 , 10**-4)
+    print(prediction)
+
+    mse = compute_MSE(movie_ratings_df.to_numpy(), prediction)
+    mae = compute_MAE(movie_ratings_df.to_numpy(), prediction)
+    print(mse)
+    print(mae)
+
+
+
 
 def cross_validation():
     "This data set consists of:\
@@ -205,7 +246,7 @@ def cross_validation():
 
         # prediction
         train_df_copy = pd.DataFrame.copy(train_set)
-        prediction = itemrank(train_df_copy, 0.85 , 0.0001)
+        prediction = itemrank(train_df_copy, 0.85, 10**-4)
 
         # performance evaluation on the training set
         mse_train[i] = compute_MSE(train_set.to_numpy(), prediction)
@@ -243,5 +284,7 @@ if __name__ == '__main__':
 
 " to do next :" \
 "- check the original paper if the method is well used (normalization, alpha value, correlation matrix, etc" \
-" make plots of mse and mae for differents values of alpha and threshold"
+" make plots of mse and mae for differents values of alpha and threshold" \
+"- use relative ratings" \
+"- change the scoring"
 
