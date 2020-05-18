@@ -10,7 +10,12 @@ class ubknn():
         self.n = n
         self.links_df = trainning_data
         ## locations of the predicted datapoints
+        # testing_data = testing_data.replace(0, 'NaN')
+        # print("*****************8this is testing_data",testing_data)
         self.list_loc = list(testing_data.stack().index)
+        # print("this is self.list_loc", self.list_loc)
+        self.nuser = 943
+        self.nmovie = 1682
     # def __init__(self, nmovie, nuser, Mean, final, final_movie, similarity_with_movie, sim_user_neighbour_m, n):
         # self.nmovie = nmovie
         # self.nuser = nuser
@@ -30,7 +35,8 @@ class ubknn():
         self.links_df_avg['adg_rating']=self.links_df_avg['rating_x']-self.links_df_avg['rating_y']
         ## create pivot table for real taring
         self.check = pd.pivot_table(self.links_df_avg,values='rating_x',index='userId',columns='movieId')
-        self.nmovie, self.nuser = self.check.shape
+        # print("this is the shape of check dataset", self.check.shape)
+        #self.nmovie, self.nuser = self.check.shape
         ## create pivot table for relative rating
         self.final = pd.pivot_table(self.links_df_avg,values='adg_rating',index='userId',columns='movieId')
 
@@ -113,16 +119,28 @@ class ubknn():
     def pred(self):
         ## store the locations with not null values
         ## for cross validation, here is the code to find the location to predict, maybe change it to test dataset's locations
-        # self.list_loc = list(self.final.stack().index)
-        self.pred = np.zeros((self.nmovie,self.nuser))
+        #list_loc = list(self.final.stack().index)
+        self.pred = np.zeros((self.nuser,self.nmovie))
+        # print("nmovie", self.nmovie)
+        # print("nuser", self.nuser)
         self.sim_user_30_m = find_n_neighbours(self.similarity_with_user, self.n)
         #sim_user_30_u = find_n_neighbours(similarity_with_user,30)
-
+        mark = 0
         ## predict for each location with values in previous matrix
+        # print("this is self.list_loc",self.list_loc[1:900])
         for loc1, loc2 in self.list_loc:
-            self.score = self.ub_user_item_score(loc1, loc2)
-            self.pred[loc1 - 1][loc2 - 1] = self.score
+            # print("***************this is loc1 and loc2****************", loc1, loc2)
 
+            try:
+                self.score = self.ub_user_item_score(loc1, loc2)
+                self.pred[loc1 - 1][loc2 - 1] = self.score
+                # print("this is score", self.score)
+            except:
+                self.pred[loc1 - 1][loc2 - 1] = 0
+                mark += 1
+                # print("failed and fill with 0")
+        # print("***********************************************************times of filling 0",mark)
+        # print(self.pred)
         return self.pred
 
 def find_n_neighbours(df, n):
@@ -170,7 +188,12 @@ def data_split(filepath):
 def ub_knn_test(trainning_data, testing_data, n):
 
     ## for cross validation, the train data can keep the same with maybe different form
+    # print("this is trainning_data", trainning_data)
+    # print("this is testing_data", testing_data)
+    testing_data = testing_data.replace(0, 'NaN')
     data = ubknn(trainning_data, testing_data, n)
+    # print("this is trainning_data", trainning_data)
+    # print("this is testing_data", testing_data)
     data.loaddata()
     data.get_similarity_with_user()
     #data.get_similarity_with_movie()
@@ -232,11 +255,16 @@ def ub_knn_para_tuning():
 def run_ubknn(n):
     filepath = "ml-100k/u.data"
     trainning_data, testing_data = data_split(filepath)
-    ub_pred, test = ub_knn_test(trainning_data, testing_data, n)
+    print("this is trainning_data", trainning_data)
+    df_new1, df_new2 = trainning_data[:200], trainning_data[200:]
+    print("this is trainning_data after split", df_new2)
+
+    print("this is testing_data", testing_data)
+    ub_pred, test = ub_knn_test(df_new2, df_new1, n)
     # print(ub_pred)
     # print(test)
-    # print('MSE for neighbour size ' + str(n) + ' is ' + str(mse(ub_pred, test)))
-    # print('MAE for neighbour size ' + str(n) + ' is ' + str(mae(ub_pred, test)))
+    print('MSE for neighbour size ' + str(n) + ' is ' + str(mse(ub_pred, df_new1)))
+    print('MAE for neighbour size ' + str(n) + ' is ' + str(mae(ub_pred, df_new1)))
 
 if __name__ == '__main__':
 
