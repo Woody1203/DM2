@@ -100,8 +100,8 @@ def itemrank(data_df, alpha, prec):
         k += 1
 
     # find the maximum and the minimum values of pred
-    maxi = 0
-    mini = 1
+    maxi = -1000
+    mini = 1000
     for i in range(nuser):
         if max(pred[i]) > maxi:
             maxi = max(pred[i])
@@ -111,8 +111,8 @@ def itemrank(data_df, alpha, prec):
     # transform the ranking values into ratings
     for i in range(nuser):
         for j in range(nmovie):
-            # pred[i][j] = transform_to_ratings_to_int(maxi, mini, pred[i][j])
             pred[i][j] = transform_to_ratings_to_int(maxi, mini, pred[i][j])
+            # pred[i][j] = transform_to_ratings(maxi, mini, pred[i][j])
 
     return pred
 
@@ -246,7 +246,7 @@ def cross_validation():
 
         # prediction
         train_df_copy = pd.DataFrame.copy(train_set)
-        prediction = itemrank(train_df_copy, 0.95, 10**-4)
+        prediction = itemrank(train_df_copy, 0.98, 10**-4)
 
         # performance evaluation on the training set
         mse_train[i] = compute_MSE(train_set.to_numpy(), prediction)
@@ -263,6 +263,7 @@ def cross_validation():
         print()
 
         i += 1
+        break
 
     mean_mse_train = mse_train.mean()
     mean_mae_train = mae_train.mean()
@@ -285,6 +286,5 @@ if __name__ == '__main__':
 " to do next :" \
 "- check the original paper if the method is well used (normalization, alpha value, correlation matrix, etc" \
 " make plots of mse and mae for differents values of alpha and threshold" \
-"- use relative ratings" \
 "- change the scoring"
 

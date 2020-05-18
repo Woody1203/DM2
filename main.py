@@ -37,23 +37,6 @@ def compute_MAE(np_ratings, np_preds):
 
     return mae_tot/nb_ratings
 
-def baseline(A, B):
-    B = B.replace(0, 'NaN')
-    A = pd.pivot_table(A,values='rating',index='userId',columns='movieId')
-    A.loc['mean'] = A.mean()
-    A = A.fillna(0)
-    nmovie, nuser = B.shape
-    pred = np.zeros((nmovie,nuser))
-    list_loc = list(B.stack().index)
-
-    for i,j in list_loc:
-        try:
-            pred[i-1][j-1] = A.loc['mean'][j]
-        except:
-            pred[i-1][j-1] = 0
-
-    return pred
-
 def kfold_cross_validation(k):
     "This data set consists of:\
     * 100,000 ratings (1-5) from 943 users on 1682 movies.\
@@ -283,7 +266,7 @@ def kfold_cross_validation(k):
     plt.show()
 
 if __name__ == '__main__':
-    kfold_cross_validation(10)
+    kfold_cross_validation(4)
 
 '''
 1) cv with plot
