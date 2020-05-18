@@ -112,10 +112,7 @@ class ubknn():
         fin['score']=fin.apply(lambda x:x['adg_score'] * x['correlation'],axis=1)
         nume = fin['score'].sum()
         deno = fin['correlation'].sum()
-        try:
-            final_score = avg_user + (nume/deno)
-        except:
-            final_score = avg_user
+        final_score = avg_user + (nume/deno)
         return final_score
         #score.append(final_score)
 
@@ -139,7 +136,7 @@ class ubknn():
                 self.pred[loc1 - 1][loc2 - 1] = self.score
                 # print("this is score", self.score)
             except:
-                self.pred[loc1 - 1][loc2 - 1] = self.Mean[loc2]
+                self.pred[loc1 - 1][loc2 - 1] = 0
                 mark += 1
                 # print("failed and fill with 0")
         # print("***********************************************************times of filling 0",mark)
