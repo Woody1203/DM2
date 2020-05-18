@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import KFold
+import statistics
 
 
 class User(object):
@@ -10,13 +11,20 @@ class User(object):
         self.all_movies = all_movies
         self.ratings_given = []
         self.n_ratings = 0
+        self.mean_rating = 0
+        self.median_rating = 0
 
     # ratings_given[i] = [id_movie, movie_rating]
     def generate_ratings_given(self, movie_list):
+        ratings_list = []
         for m in range(len(self.all_movies)):
             if self.all_movies[m] > 0:
                 self.ratings_given.append([movie_list[m], self.all_movies[m]])
+                self.mean_rating += self.all_movies[m]
+                ratings_list.append(self.all_movies[m])
         self.n_ratings = len(self.ratings_given)
+        self.mean_rating /= self.n_ratings
+        self.median_rating = statistics.median(ratings_list)
 
 class Movie(object):
 
@@ -84,7 +92,11 @@ def itemrank(data_df, alpha, prec):
     for u in user_list:
         "not normalized in algo, normalized in paper"
         d = u.all_movies
-        d_rel = d - d.mean()
+        # print(u.mean_rating)
+        # d_rel = d - d.mean()
+        # print(u.median_rating)
+        # d_rel = d - u.mean_rating
+        d_rel = d - u.median_rating
         # d_rel /= np.linalg.norm(d_rel)
         "ones in algo, ones normalized in paper"
         IR = np.ones(nmovie) #/ nmovie
@@ -99,6 +111,7 @@ def itemrank(data_df, alpha, prec):
         pred[k] = IR
         k += 1
 
+    print(pred)
     # find the maximum and the minimum values of pred
     maxi = -1000
     mini = 1000
@@ -114,6 +127,7 @@ def itemrank(data_df, alpha, prec):
             pred[i][j] = transform_to_ratings_to_int(maxi, mini, pred[i][j])
             # pred[i][j] = transform_to_ratings(maxi, mini, pred[i][j])
 
+    # pred = transform_to_ratings_new(pred)
     return pred
 
 def transform_to_ratings(maximum, minimum, value):
@@ -125,6 +139,25 @@ def transform_to_ratings_to_int(maximum, minimum, value):
     #  f(a)=c and f(b)=d
     # f(t) = c + (d-c)/(b-a) * (t-a)
     return int(round(1 + 4/(maximum - minimum) * (value - minimum)))
+
+def transform_to_ratings_new(pred):
+
+    nuser, nmovie = pred.shape
+
+    mid = 3.5
+    for i in range(nuser):
+        maxi = max(pred[i])
+        median = statistics.median(pred[i])
+        mini = min(pred[i])
+        for j in range(nmovie):
+            if pred[i][j] <= median:
+                pred[i][j] = int(round(1 + (mid-1)/(median - mini) * (pred[i][j] - mini)))
+            else:
+                pred[i][j] = int(round(mid + (5-mid)/(maxi - median) * (pred[i][j] - median)))
+
+    return pred
+
+
 
 def compute_MSE(np_ratings, np_preds):
     ratings_flat = np_ratings.flatten()
@@ -246,7 +279,8 @@ def cross_validation():
 
         # prediction
         train_df_copy = pd.DataFrame.copy(train_set)
-        prediction = itemrank(train_df_copy, 0.98, 10**-4)
+        prediction = itemrank(train_df_copy, 0.6, 10**-4)
+        print(prediction)
 
         # performance evaluation on the training set
         mse_train[i] = compute_MSE(train_set.to_numpy(), prediction)
@@ -265,15 +299,16 @@ def cross_validation():
         i += 1
         break
 
-    mean_mse_train = mse_train.mean()
-    mean_mae_train = mae_train.mean()
-    print(mean_mse_train)
-    print(mean_mae_train)
 
-    mean_mse_test = mse_test.mean()
-    mean_mae_test = mae_test.mean()
-    print(mean_mse_test)
-    print(mean_mae_test)
+    # mean_mse_train = mse_train.mean()
+    # mean_mae_train = mae_train.mean()
+    # print(mean_mse_train)
+    # print(mean_mae_train)
+    #
+    # mean_mse_test = mse_test.mean()
+    # mean_mae_test = mae_test.mean()
+    # print(mean_mse_test)
+    # print(mean_mae_test)
 
 
 if __name__ == '__main__':
