@@ -11,26 +11,53 @@ tick pos=left,
 title={MSE values for three algorithms},
 x grid style={white!69.0196078431373!black},
 xlabel={nfolds},
-xmin=0.945, xmax=1.055,
+xmin=0.55, xmax=10.45,
 xtick style={color=black},
 y grid style={white!69.0196078431373!black},
 ylabel={MAE},
-ymin=0.728986239692919, ymax=1.12992446477653,
+ymin=0.718293974457161, ymax=1.1344145726449,
 ytick style={color=black}
 ]
 \addplot [semithick, red]
 table {%
 1 0.823038177572631
+2 0.829598359910736
+3 0.820443440350495
+4 0.819077140565113
+5 0.811987261899276
+6 0.812673402372896
+7 0.811915055018644
+8 0.810937250769112
+9 0.809287252257252
+10 0.825037948713292
 };
 \addlegendentry{MAE_baseline}
 \addplot [semithick, green!50!black]
 table {%
 1 1.1117
+2 1.1155
+3 1.099
+4 1.0976
+5 1.0595
+6 1.0803
+7 1.0784
+8 1.0926
+9 1.077
+10 1.08960896089609
 };
 \addlegendentry{MAE_itemrank}
 \addplot [semithick, color0]
 table {%
 1 0.747210704469447
+2 0.754252429756033
+3 0.741767441943255
+4 0.743727040765025
+5 0.743103722265988
+6 0.738760583922098
+7 0.737208547102058
+8 0.741465927498711
+9 0.740744903554335
+10 0.744711183230729
 };
 \addlegendentry{MAE_ubknn}
 \end{axis}

@@ -47,22 +47,6 @@ def kfold_cross_validation(k):
     # movie_ratings_df=links_df.pivot_table(index='movieId',columns='userId',values='rating').T
     movie_ratings_df=links_df.pivot_table(index='movieId',columns='userId',values='rating').fillna(0).T
 
-
-    mse_train_itemrank = np.zeros(k)
-    mae_train_itemrank = np.zeros(k)
-    mse_test_itemrank = np.zeros(k)
-    mae_test_itemrank = np.zeros(k)
-
-    mse_train_ubknn = np.zeros(k)
-    mae_train_ubknn = np.zeros(k)
-    mse_test_ubknn = np.zeros(k)
-    mae_test_ubknn = np.zeros(k)
-
-    mse_train_baseline = np.zeros(k)
-    mae_train_baseline = np.zeros(k)
-    mse_test_baseline = np.zeros(k)
-    mae_test_baseline = np.zeros(k)
-
     kf = KFold(n_splits=k)
     i = 0
 
@@ -81,90 +65,107 @@ def kfold_cross_validation(k):
 
     for train, test in kf.split(links_df):
         print('fold ' + str(i+1))
-
         k.append(i+1)
 
         ### Preprocessing
         train_set_links = links_df.iloc[train] # select index of the training set
         test_set_links = links_df.iloc[test]   # select index of the test set
-        # print("this is links_df", links_df)
 
         # training set : create the ratings matrix and add the missing columns and rows;
         train_set = train_set_links.pivot_table(index='movieId',columns='userId',values='rating').T
         train_set = train_set.reindex(list(range(movie_ratings_df.T.index.min(),movie_ratings_df.T.index.max()+1)),fill_value=np.NaN, axis='columns')
         train_set = train_set.reindex(list(range(movie_ratings_df.index.min(),movie_ratings_df.index.max()+1)),fill_value=np.NaN)
         train_set = train_set.astype(float)
-        train_set_zeros = train_set.fillna(0) # NaN -> 0
-        # print("this is train_set", train_set)
+        train_set_zeros = train_set.fillna(0) # NaN -> 0 needed for itemrank
 
         # test set : create the rating matrix and add the missing columns and rows; missing values are replaced by 0
-        # test_set = test_set_links.pivot_table(index='movieId',columns='userId',values='rating').fillna(0).T
         test_set = test_set_links.pivot_table(index='movieId',columns='userId',values='rating').T
         test_set = test_set.reindex(list(range(movie_ratings_df.T.index.min(),movie_ratings_df.T.index.max()+1)),fill_value=np.NaN, axis='columns')
         test_set = test_set.reindex(list(range(movie_ratings_df.index.min(),movie_ratings_df.index.max()+1)),fill_value=np.NaN)
         test_set = test_set.astype(float)
-        # print("this is test_set",test_set)
+
 
 
         ### Baseline algorithm prediction
-        # baseline
-
         print("baseline start")
-        start_time = time.time()
-        prediction_baseline = baseline(train_set_links, test_set)
-        # print(prediction_baseline)
+        try:
+            list_time_baseline.append(np.load('numpy/time_test_baseline_{}.npy'.format(k[i])))
+            list_mse_baseline.append(np.load('numpy/MSE_test_baseline_{}.npy'.format(k[i])))
+            list_mae_baseline.append(np.load('numpy/MAE_test_baseline_{}.npy'.format(k[i])))
+            print('baseline: data loaded')
 
-        elapsed_time = time.time() - start_time
-        print("********************************** the code finished in : " + str(elapsed_time / 60) + " minutes *********")
+        except:
+            start_time = time.time()
+            prediction_baseline = baseline(train_set_links, test_set)
+            elapsed_time = time.time() - start_time
+            print("********************************** the code finished in : " + str(elapsed_time / 60) + " minutes *********")
 
-        # # performance evaluation on the training set
-        # mse_train_baseline[i] = compute_MSE(train_set.to_numpy(), prediction_baseline)
-        # mae_train_baseline[i] = compute_MAE(train_set.to_numpy(), prediction_baseline)
-        # print("trainset mse result of baseline", mse_train_baseline[i])
-        # print("trainset mse result of baseline", mae_train_baseline[i])
-        # print()
-        #
-        # elapsed_time = time.time() - start_time
-        # print("********************************** the code finished in : " + str(elapsed_time/60) + " minutes*********")
-        #
-        # performance evaluation on the test set
-        mse_test_baseline[i] = compute_MSE(test_set.to_numpy(), prediction_baseline)
-        mae_test_baseline[i] = compute_MAE(test_set.to_numpy(), prediction_baseline)
-        list_time_baseline.append(elapsed_time)
-        list_mse_baseline.append(mse_test_baseline[i])
-        list_mae_baseline.append(mae_test_baseline[i])
-        print("testset mse result of baseline", mse_test_baseline[i])
-        print("testset mae result of baseline", mae_test_baseline[i])
-        print("baseline finish")
-        print()
+            # # performance evaluation on the training set
+            # mse_train_baseline[i] = compute_MSE(train_set.to_numpy(), prediction_baseline)
+            # mae_train_baseline[i] = compute_MAE(train_set.to_numpy(), prediction_baseline)
+            # print("trainset mse result of baseline", mse_train_baseline[i])
+            # print("trainset mse result of baseline", mae_train_baseline[i])
+            # print()
+            #
+            # elapsed_time = time.time() - start_time
+            # print("********************************** the code finished in : " + str(elapsed_time/60) + " minutes*********")
+            #
+
+            # performance evaluation on the test set
+            mse_test_baseline = compute_MSE(test_set.to_numpy(), prediction_baseline)
+            mae_test_baseline = compute_MAE(test_set.to_numpy(), prediction_baseline)
+            list_time_baseline.append(elapsed_time)
+            list_mse_baseline.append(mse_test_baseline)
+            list_mae_baseline.append(mae_test_baseline)
+
+            np.save('numpy/time_test_baseline_{}.npy'.format(k[i]), list_time_baseline[i])
+            np.save('numpy/MSE_test_baseline_{}.npy'.format(k[i]), list_mse_baseline[i])
+            np.save('numpy/MAE_test_baseline_{}.npy'.format(k[i]), list_mae_baseline[i])
+
+
+            # print("testset mse result of baseline", mse_test_baseline[i])
+            # print("testset mae result of baseline", mae_test_baseline[i])
+            print("baseline finish")
+            print()
 
 
 
         ### Itemrank prediction
         print("itemrank start")
-        start_time = time.time()
-        prediction_itemrank = itemrank(train_set_zeros, 0.6, 10**-4)
-        elapsed_time = time.time() - start_time
-        print("********************************** the code finished in : " + str(elapsed_time/60) + " minutes*********")
-        print(prediction_itemrank)
+        try:
+            list_time_itemrank.append(np.load('numpy/time_test_itemrank_{}.npy'.format(k[i])))
+            list_mse_itemrank.append(np.load('numpy/MSE_test_itemrank_{}.npy'.format(k[i])))
+            list_mae_itemrank.append(np.load('numpy/MAE_test_itemrank_{}.npy'.format(k[i])))
+            print('itemrank: data loaded')
 
-        # performance evaluation on the training set
-        mse_train_itemrank[i] = compute_MSE(train_set_zeros.to_numpy(), prediction_itemrank)
-        mae_train_itemrank[i] = compute_MAE(train_set_zeros.to_numpy(), prediction_itemrank)
-        print("trainset mse result of itemrank", mse_train_itemrank[i])
-        print("trainset mse result of itemrank", mae_train_itemrank[i])
+        except:
+            start_time = time.time()
+            prediction_itemrank = itemrank(train_set_zeros, 0.6, 10**-4)
+            elapsed_time = time.time() - start_time
+            print("********************************** the code finished in : " + str(elapsed_time/60) + " minutes*********")
+
+            # # performance evaluation on the training set
+            # mse_train_itemrank[i] = compute_MSE(train_set_zeros.to_numpy(), prediction_itemrank)
+            # mae_train_itemrank[i] = compute_MAE(train_set_zeros.to_numpy(), prediction_itemrank)
+            # print("trainset mse result of itemrank", mse_train_itemrank[i])
+            # print("trainset mse result of itemrank", mae_train_itemrank[i])
+
+            # performance evaluation on the test set
+            mse_test_itemrank = compute_MSE(test_set.to_numpy(), prediction_itemrank)
+            mae_test_itemrank = compute_MAE(test_set.to_numpy(), prediction_itemrank)
+            list_time_itemrank.append(elapsed_time)
+            list_mse_itemrank.append(mse_test_itemrank)
+            list_mae_itemrank.append(mae_test_itemrank)
+
+            np.save('numpy/time_test_itemrank_{}.npy'.format(k[i]), list_time_itemrank[i])
+            np.save('numpy/MSE_test_itemrank_{}.npy'.format(k[i]), list_mse_itemrank[i])
+            np.save('numpy/MAE_test_itemrank_{}.npy'.format(k[i]), list_mae_itemrank[i])
 
 
-        # performance evaluation on the test set
-        mse_test_itemrank[i] = compute_MSE(test_set.to_numpy(), prediction_itemrank)
-        mae_test_itemrank[i] = compute_MAE(test_set.to_numpy(), prediction_itemrank)
-        list_time_itemrank.append(elapsed_time)
-        list_mse_itemrank.append(mse_test_itemrank[i])
-        list_mae_itemrank.append(mae_test_itemrank[i])
-        print("testset mse result of itemrank", mse_test_itemrank[i])
-        print("testset mae result of itemrank", mae_test_itemrank[i])
-        print("itemrank finish")
-        print()
+            # print("testset mse result of itemrank", mse_test_itemrank[i])
+            # print("testset mae result of itemrank", mae_test_itemrank[i])
+            print("itemrank finish")
+            print()
 
 
         ### User-based knn prediction
@@ -179,33 +180,46 @@ def kfold_cross_validation(k):
         # print("this is the shape of the matrix", nmovie, nuser)
         # print("this is testset",test_set)
         print("ubknn start")
-        # print("this is test set",test_set)
-        start_time = time.time()
-        prediction_ubknn, testing = ub_knn_test(train_set_links, test_set, 10)
-        elapsed_time = time.time() - start_time
-        print("********************************** the code finished in : " + str(elapsed_time/60) + " minutes*********")
-        print(prediction_ubknn)
+        try:
+            list_time_ubknn.append(np.load('numpy/time_test_ubknn_{}.npy'.format(k[i])))
+            list_mse_ubknn.append(np.load('numpy/MSE_test_ubknn_{}.npy'.format(k[i])))
+            list_mae_ubknn.append(np.load('numpy/MAE_test_ubknn_{}.npy'.format(k[i])))
+            print('baseline: data loaded')
 
-        # # performance evaluation on the training set
-        # mse_train_ubknn[i] = compute_MSE(train_set_zeros.to_numpy(), prediction_ubknn)
-        # mae_train_ubknn[i] = compute_MAE(train_set_zeros.to_numpy(), prediction_ubknn)
-        # print("trainset mse result of ubknn",mse_train_ubknn[i])
-        # print("trainset mae result of ubknn",mae_train_ubknn[i])
-        # print()
+        except:
+            # print("this is test set",test_set)
+            start_time = time.time()
+            prediction_ubknn, testing = ub_knn_test(train_set_links, test_set, 10)
+            elapsed_time = time.time() - start_time
+            print("********************************** the code finished in : " + str(elapsed_time/60) + " minutes*********")
 
-        # performance evaluation on the test set
-        mse_test_ubknn[i] = compute_MSE(test_set.to_numpy(), prediction_ubknn)
-        mae_test_ubknn[i] = compute_MAE(test_set.to_numpy(), prediction_ubknn)
-        list_time_ubknn.append(elapsed_time)
-        list_mse_ubknn.append(mse_test_ubknn[i])
-        list_mae_ubknn.append(mae_test_ubknn[i])
-        print("testset mse result of ubknn", mse_test_ubknn[i])
-        print("testset mse result of ubknn", mae_test_ubknn[i])
-        print("ubknn finish")
-        print()
+            # # performance evaluation on the training set
+            # mse_train_ubknn[i] = compute_MSE(train_set_zeros.to_numpy(), prediction_ubknn)
+            # mae_train_ubknn[i] = compute_MAE(train_set_zeros.to_numpy(), prediction_ubknn)
+            # print("trainset mse result of ubknn",mse_train_ubknn[i])
+            # print("trainset mae result of ubknn",mae_train_ubknn[i])
+            # print()
+
+            # performance evaluation on the test set
+            mse_test_ubknn = compute_MSE(test_set.to_numpy(), prediction_ubknn)
+            mae_test_ubknn = compute_MAE(test_set.to_numpy(), prediction_ubknn)
+            list_time_ubknn.append(elapsed_time)
+            list_mse_ubknn.append(mse_test_ubknn)
+            list_mae_ubknn.append(mae_test_ubknn)
+
+            np.save('numpy/time_test_ubknn_{}.npy'.format(k[i]), list_time_ubknn[i])
+            np.save('numpy/MSE_test_ubknn_{}.npy'.format(k[i]), list_mse_ubknn[i])
+            np.save('numpy/MAE_test_ubknn_{}.npy'.format(k[i]), list_mae_ubknn[i])
+
+
+            # print("testset mse result of ubknn", mse_test_ubknn[i])
+            # print("testset mse result of ubknn", mae_test_ubknn[i])
+            print("ubknn finish")
+            print()
 
         i += 1
-        break
+        print()
+
 
 
     cv_elapsed_time = time.time() - cv_start_time
@@ -213,26 +227,48 @@ def kfold_cross_validation(k):
 
 
     # mean results for itemrank
-    mean_mse_test_itemrank = mse_test_itemrank.mean()
-    mean_mae_test_itemrank = mae_test_itemrank.mean()
-    print("mean mae for itemrank", mean_mse_test_itemrank)
-    print("mean mae for itemrank", mean_mae_test_itemrank)
+    mean_mse_test_itemrank = sum(list_mse_itemrank) / len((list_mse_itemrank))
+    mean_mae_test_itemrank = sum(list_mae_itemrank) / len(list_mae_itemrank)
+    # print("mean mae for itemrank", mean_mse_test_itemrank)
+    # print("mean mae for itemrank", mean_mae_test_itemrank)
 
     # mean results for baseline
-    mean_mse_test_baseline = mse_test_baseline.mean()
-    mean_mae_test_baseline = mae_test_baseline.mean()
-    print("mean mse for baseline", mean_mse_test_baseline)
-    print("mean mae for baseline", mean_mae_test_baseline)
+    mean_mse_test_baseline = sum(list_mse_baseline) / len((list_mse_baseline))
+    mean_mae_test_baseline = sum(list_mae_baseline) / len((list_mae_baseline))
+    # print("mean mse for baseline", mean_mse_test_baseline)
+    # print("mean mae for baseline", mean_mae_test_baseline)
 
     # mean results for ubknn
-    mean_mse_test_ubknn = mse_test_ubknn.mean()
-    mean_mae_test_ubknn = mae_test_ubknn.mean()
-    print("mean mae for ubknn", mean_mse_test_ubknn)
-    print("mean mae for ubknn", mean_mae_test_ubknn)
+    mean_mse_test_ubknn = sum(list_mse_ubknn) / len((list_mse_ubknn))
+    mean_mae_test_ubknn = sum(list_mae_ubknn) / len((list_mae_ubknn))
+    # print("mean mae for ubknn", mean_mse_test_ubknn)
+    # print("mean mae for ubknn", mean_mae_test_ubknn)
 
 
     ### Plots
     save_plot = True
+
+    # mean MSE
+    methods = ['ub-knn', 'baseline', 'itemrank']
+    mean_mse_test = [mean_mse_test_ubknn, mean_mse_test_baseline, mean_mse_test_itemrank]
+    plt.bar(methods, mean_mse_test)
+    plt.xlabel('methods')
+    plt.ylabel('mean MSE')
+    plt.title('mean MSE values for three recommendation algorithms')
+    if save_plot:
+        tikzplotlib.save('Latex/graph_mean_mse_test.tex')
+    plt.show()
+
+    # mean MAE
+    methods = ['ub-knn', 'baseline', 'itemrank']
+    mean_mae_test = [mean_mae_test_ubknn, mean_mae_test_baseline, mean_mae_test_itemrank]
+    plt.bar(methods, mean_mae_test)
+    plt.xlabel('methods')
+    plt.ylabel('mean MAE')
+    plt.title('mean MAE values for three recommendation algorithms')
+    if save_plot:
+        tikzplotlib.save('Latex/graph_mean_mae_test.tex')
+    plt.show()
 
     # mse plt
     # baseline results

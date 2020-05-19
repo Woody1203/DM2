@@ -111,7 +111,6 @@ def itemrank(data_df, alpha, prec):
         pred[k] = IR
         k += 1
 
-    print(pred)
     # find the maximum and the minimum values of pred
     maxi = -1000
     mini = 1000
