@@ -1,0 +1,39 @@
+% This file was created by tikzplotlib v0.9.1.
+\begin{tikzpicture}
+
+\begin{axis}[
+legend cell align={left},
+legend style={fill opacity=0.8, draw opacity=1, text opacity=1, draw=white!80!black},
+tick align=outside,
+tick pos=left,
+title={alpha paraeter tuning},
+x grid style={white!69.0196078431373!black},
+xlabel={aplha values},
+xmin=0.16, xmax=1.04,
+xtick style={color=black},
+y grid style={white!69.0196078431373!black},
+ylabel={MSE},
+ymin=1.0117116199048, ymax=2.89863680363215,
+ytick style={color=black}
+]
+\addplot [semithick, blue]
+table {%
+0.2 2.57541548221929
+0.4 2.11765080123205
+0.6 2.0177296675867
+0.8 2.31858253170127
+1 2.81286747709908
+};
+\addlegendentry{MSE}
+\addplot [semithick, red]
+table {%
+0.2 1.29230287131485
+0.4 1.15840153046122
+0.6 1.09748094643786
+0.8 1.16039152166087
+1 1.34995329093164
+};
+\addlegendentry{MAE}
+\end{axis}
+
+\end{tikzpicture}

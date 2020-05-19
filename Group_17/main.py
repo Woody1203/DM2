@@ -99,17 +99,6 @@ def kfold_cross_validation(k):
             elapsed_time = time.time() - start_time
             print("********************************** the code finished in : " + str(elapsed_time / 60) + " minutes *********")
 
-            # # performance evaluation on the training set
-            # mse_train_baseline[i] = compute_MSE(train_set.to_numpy(), prediction_baseline)
-            # mae_train_baseline[i] = compute_MAE(train_set.to_numpy(), prediction_baseline)
-            # print("trainset mse result of baseline", mse_train_baseline[i])
-            # print("trainset mse result of baseline", mae_train_baseline[i])
-            # print()
-            #
-            # elapsed_time = time.time() - start_time
-            # print("********************************** the code finished in : " + str(elapsed_time/60) + " minutes*********")
-            #
-
             # performance evaluation on the test set
             mse_test_baseline = compute_MSE(test_set.to_numpy(), prediction_baseline)
             mae_test_baseline = compute_MAE(test_set.to_numpy(), prediction_baseline)
@@ -227,11 +216,8 @@ def kfold_cross_validation(k):
     plt.show()
 
     # mse plt
-    # baseline results
     plt.plot(k, list_mse_baseline, "-b", label="MSE_baseline")
-    #itemrank results
     plt.plot(k, list_mse_itemrank, "-y", label="MSE_itemrank")
-    ## ubknn results
     plt.plot(k, list_mse_ubknn, "-c", label="MSE_ubknn")
     plt.xlabel('nfolds')
     plt.ylabel('MSE')

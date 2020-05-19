@@ -46,7 +46,7 @@ class Movie(object):
 def itemrank(data_df, alpha, prec):
     """
     :param data: a dataframe of ratings of size (nuser, nmovie)
-    :param alpha:
+    :param alpha: "free surfer" parameter, control the probability to jump to another movie node
     :param prec: thresholf for convergence
     :return: numpy prediction matrix
     """
@@ -92,10 +92,8 @@ def itemrank(data_df, alpha, prec):
     pred = np.zeros((nuser, nmovie))
     k = 0
     for u in user_list:
-        "not normalized in algo, normalized in paper"
         d = u.all_movies
         d_rel = d - u.median_rating
-        "ones in algo, ones normalized in paper"
         IR = np.ones(nmovie)
         converged = False
         ite = 0
@@ -121,36 +119,16 @@ def itemrank(data_df, alpha, prec):
     for i in range(nuser):
         for j in range(nmovie):
             pred[i][j] = transform_to_ratings_to_int(maxi, mini, pred[i][j])
-            # pred[i][j] = transform_to_ratings(maxi, mini, pred[i][j])
 
     return pred
 
-def transform_to_ratings(maximum, minimum, value):
-    #  f(a)=c and f(b)=d
-    # f(t) = c + (d-c)/(b-a) * (t-a)
-    return 1 + 4/(maximum - minimum) * (value - minimum)
 
 def transform_to_ratings_to_int(maximum, minimum, value):
     #  f(a)=c and f(b)=d
     # f(t) = c + (d-c)/(b-a) * (t-a)
     return int(round(1 + 4/(maximum - minimum) * (value - minimum)))
 
-def transform_to_ratings_new(pred):
 
-    nuser, nmovie = pred.shape
-
-    mid = 3.5
-    for i in range(nuser):
-        maxi = max(pred[i])
-        median = statistics.median(pred[i])
-        mini = min(pred[i])
-        for j in range(nmovie):
-            if pred[i][j] <= median:
-                pred[i][j] = int(round(1 + (mid-1)/(median - mini) * (pred[i][j] - mini)))
-            else:
-                pred[i][j] = int(round(mid + (5-mid)/(maxi - median) * (pred[i][j] - median)))
-
-    return pred
 
 
 def compute_MSE(np_ratings, np_preds):
@@ -184,9 +162,9 @@ def compute_MAE(np_ratings, np_preds):
     return mae_tot/nb_ratings
 
 def alpha_tuning():
-    "This data set consists of:\
-    * 100,000 ratings (1-5) from 943 users on 1682 movies.\
-    * Each user has rated at least 20 movies. "
+    # test several values of the alpha parameter and plot the results as MSE and MAE on the test set with a 4 fold cv
+    # values for each alpha
+
     links_df = pd.read_csv("ml-100k/u.data", sep="\t", header = 0, names = ["userId", "movieId", "rating", "timeStamp"], index_col=False)
     movie_ratings_df=links_df.pivot_table(index='movieId',columns='userId',values='rating').fillna(0).T
     k = 4  # number of folds for the cv
