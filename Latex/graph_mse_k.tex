@@ -1,0 +1,39 @@
+% This file was created by tikzplotlib v0.9.1.
+\begin{tikzpicture}
+
+\definecolor{color0}{rgb}{0.75,0.75,0}
+\definecolor{color1}{rgb}{0,0.75,0.75}
+
+\begin{axis}[
+legend cell align={left},
+legend style={fill opacity=0.8, draw opacity=1, text opacity=1, draw=white!80!black},
+tick align=outside,
+tick pos=left,
+title={MSE values for three algorithms},
+x grid style={white!69.0196078431373!black},
+xlabel={nfolds},
+xmin=0.945, xmax=1.055,
+xtick style={color=black},
+y grid style={white!69.0196078431373!black},
+ylabel={MSE},
+ymin=0.848397388551265, ymax=2.1266001243547,
+ytick style={color=black}
+]
+\addplot [semithick, blue]
+table {%
+1 1.05253410106321
+};
+\addlegendentry{MSE_baseline}
+\addplot [semithick, color0]
+table {%
+1 2.0685
+};
+\addlegendentry{MSE_itemrank}
+\addplot [semithick, color1]
+table {%
+1 0.906497512905967
+};
+\addlegendentry{MSE_ubknn}
+\end{axis}
+
+\end{tikzpicture}

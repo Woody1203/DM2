@@ -6,16 +6,32 @@ def baseline(A, B):
     A = pd.pivot_table(A,values='rating',index='userId',columns='movieId')
     A.loc['mean'] = A.mean()
     A = A.fillna(0)
+    # data = A.drop(['mean'])
     nmovie, nuser = B.shape
     pred = np.zeros((nmovie,nuser))
+    # print(nmovie, nuser)
+
     list_loc = list(B.stack().index)
+    # print("this is A[loc]", A.loc['mean'])
+
+    # mark = 0
 
     for i,j in list_loc:
+        # mark += 1
+        # print("this is mark", mark)
+        # print("this is i", i)
+        # print("this is j", j)
+        # print("this is pred[i-1][j-1]", pred[i-1][j-1])
+        # print("this is A.loc['mean'][j]", A.loc['mean'][j])
+
+        # pred[i-1][j-1] = 0
+
         try:
             pred[i-1][j-1] = A.loc['mean'][j]
+            # print("location", i, j)
+            # print(pred[i-1][j-1])
         except:
             pred[i-1][j-1] = 0
-
     return pred
 
 def baseline_1(data_as_links, matrix_pred_loc):

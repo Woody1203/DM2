@@ -4,8 +4,9 @@ from sklearn.model_selection import KFold
 from ItemRank import itemrank
 import matplotlib.pyplot as plt
 from test0511 import ub_knn_test
-# from baseline import baseline, baseline_2
+from baseline import baseline
 import time
+import tikzplotlib
 
 
 def compute_MSE(np_ratings, np_preds):
@@ -37,41 +38,6 @@ def compute_MAE(np_ratings, np_preds):
             nb_ratings += 1
 
     return mae_tot/nb_ratings
-
-
-def baseline(A, B):
-    B = B.replace(0, 'NaN')
-    A = pd.pivot_table(A,values='rating',index='userId',columns='movieId')
-    A.loc['mean'] = A.mean()
-    A = A.fillna(0)
-    # data = A.drop(['mean'])
-    nmovie, nuser = B.shape
-    pred = np.zeros((nmovie,nuser))
-    # print(nmovie, nuser)
-
-    list_loc = list(B.stack().index)
-    # print("this is A[loc]", A.loc['mean'])
-
-    # mark = 0
-
-    for i,j in list_loc:
-        # mark += 1
-        # print("this is mark", mark)
-        # print("this is i", i)
-        # print("this is j", j)
-        # print("this is pred[i-1][j-1]", pred[i-1][j-1])
-        # print("this is A.loc['mean'][j]", A.loc['mean'][j])
-
-        # pred[i-1][j-1] = 0
-
-        try:
-            pred[i-1][j-1] = A.loc['mean'][j]
-            # print("location", i, j)
-            # print(pred[i-1][j-1])
-        except:
-            pred[i-1][j-1] = 0
-    return pred
-
 
 def kfold_cross_validation(k):
     "This data set consists of:\
@@ -172,48 +138,22 @@ def kfold_cross_validation(k):
         print("baseline finish")
         print()
 
-        ## performance evaluation on the training set
-        ## mse_train_baseline[i] = compute_MSE(train_set.to_numpy(), prediction_baseline)
-        ## mae_train_baseline[i] = compute_MAE(train_set.to_numpy(), prediction_baseline)
-        ## print("trainset mse result of baseline", mse_train_baseline[i])
-        ## print("trainset mse result of baseline", mae_train_baseline[i])
-        ## print()
+
 
         ### Itemrank prediction
         print("itemrank start")
-        train_set_zeros = train_set.fillna(0) # NaN -> 0
-        train_set_zeros_copy = pd.DataFrame.copy(train_set_zeros)
-
         start_time = time.time()
-        prediction_itemrank = itemrank(train_set_zeros_copy, 0.85 , 0.0001)
+        prediction_itemrank = itemrank(train_set_zeros, 0.6, 10**-4)
         elapsed_time = time.time() - start_time
         print("********************************** the code finished in : " + str(elapsed_time/60) + " minutes*********")
-
-        #
-
-
-        # ### Itemrank prediction
-        # train_set_zeros_copy = pd.DataFrame.copy(train_set_zeros)
-        # prediction_itemrank = itemrank(train_set_zeros_copy, 0.85 , 0.0001)
-        # print(prediction_itemrank)
+        print(prediction_itemrank)
 
         # performance evaluation on the training set
-        # mse_train_itemrank[i] = compute_MSE(train_set_zeros.to_numpy(), prediction_itemrank)
-        # mae_train_itemrank[i] = compute_MAE(train_set_zeros.to_numpy(), prediction_itemrank)
-        # print("trainset mse result of itemrank", mse_train_itemrank[i])
-        # print("trainset mse result of itemrank", mae_train_itemrank[i])
-        #
-        # print()
+        mse_train_itemrank[i] = compute_MSE(train_set_zeros.to_numpy(), prediction_itemrank)
+        mae_train_itemrank[i] = compute_MAE(train_set_zeros.to_numpy(), prediction_itemrank)
+        print("trainset mse result of itemrank", mse_train_itemrank[i])
+        print("trainset mse result of itemrank", mae_train_itemrank[i])
 
-        # print(prediction_itemrank)
-        #
-        # # performance evaluation on the training set
-        # mse_train_itemrank[i] = compute_MSE(train_set_zeros.to_numpy(), prediction_itemrank)
-        # mae_train_itemrank[i] = compute_MAE(train_set_zeros.to_numpy(), prediction_itemrank)
-        # print("trainset mse result of itemrank", mse_train_itemrank[i])
-        # print("trainset mse result of itemrank", mae_train_itemrank[i])
-        # print()
-        #
 
         # performance evaluation on the test set
         mse_test_itemrank[i] = compute_MSE(test_set.to_numpy(), prediction_itemrank)
@@ -244,24 +184,14 @@ def kfold_cross_validation(k):
         prediction_ubknn, testing = ub_knn_test(train_set_links, test_set, 10)
         elapsed_time = time.time() - start_time
         print("********************************** the code finished in : " + str(elapsed_time/60) + " minutes*********")
+        print(prediction_ubknn)
 
-        # print(prediction_ubknn)
-        #
         # # performance evaluation on the training set
         # mse_train_ubknn[i] = compute_MSE(train_set_zeros.to_numpy(), prediction_ubknn)
         # mae_train_ubknn[i] = compute_MAE(train_set_zeros.to_numpy(), prediction_ubknn)
         # print("trainset mse result of ubknn",mse_train_ubknn[i])
         # print("trainset mae result of ubknn",mae_train_ubknn[i])
         # print()
-
-        #
-        # # # performance evaluation on the test set
-        # mse_test_ubknn[i] = compute_MSE(test_set.to_numpy(), prediction_ubknn)
-        # mae_test_ubknn[i] = compute_MAE(test_set.to_numpy(), prediction_ubknn)
-        # print("testset mse result of ubknn", mse_test_ubknn[i])
-        # print("testset mse result of ubknn", mae_test_ubknn[i])
-        # print()
-
 
         # performance evaluation on the test set
         mse_test_ubknn[i] = compute_MSE(test_set.to_numpy(), prediction_ubknn)
@@ -274,32 +204,13 @@ def kfold_cross_validation(k):
         print("ubknn finish")
         print()
 
-        # ### User-based knn prediction
-        # train_set_copy = pd.DataFrame.copy(train_set)
-        # print(movie_ratings_df)
-        # print(train_set_links)
-        # prediction_ubknn, testing = ub_knn_test(train_set_links, movie_ratings_df, 10)
-        # print(prediction_ubknn)
-        #
-        # # performance evaluation on the training set
-        # mse_train_ubknn[i] = compute_MSE(train_set_zeros.to_numpy(), prediction_ubknn)
-        # mae_train_ubknn[i] = compute_MAE(train_set_zeros.to_numpy(), prediction_ubknn)
-        # print(mse_train_ubknn[i])
-        # print(mae_train_ubknn[i])
-        # print()
-        #
-        # # performance evaluation on the test set
-        # mse_test_ubknn[i] = compute_MSE(test_set.to_numpy(), prediction_ubknn)
-        # mae_test_ubknn[i] = compute_MAE(test_set.to_numpy(), prediction_ubknn)
-        # print(mse_test_ubknn[i])
-        # print(mae_test_ubknn[i])
-        # print()
-
         i += 1
-        # break
+        break
+
 
     cv_elapsed_time = time.time() - cv_start_time
     print("total code finish in", cv_elapsed_time, "seconds")
+
 
     # mean results for itemrank
     mean_mse_test_itemrank = mse_test_itemrank.mean()
@@ -319,6 +230,10 @@ def kfold_cross_validation(k):
     print("mean mae for ubknn", mean_mse_test_ubknn)
     print("mean mae for ubknn", mean_mae_test_ubknn)
 
+
+    ### Plots
+    save_plot = True
+
     # mse plt
     # baseline results
     plt.plot(k, list_mse_baseline, "-b", label="MSE_baseline")
@@ -326,24 +241,36 @@ def kfold_cross_validation(k):
     plt.plot(k, list_mse_itemrank, "-y", label="MSE_itemrank")
     ## ubknn results
     plt.plot(k, list_mse_ubknn, "-c", label="MSE_ubknn")
+    plt.xlabel('nfolds')
+    plt.ylabel('MSE')
     plt.legend(loc="upper right")
     plt.title('MSE values for three algorithms')
+    if save_plot:
+        tikzplotlib.save('Latex/graph_mse_k.tex')
     plt.show()
 
     # mae plt
     plt.plot(k, list_mae_baseline, "-r", label="MAE_baseline")
     plt.plot(k, list_mae_itemrank, "-g", label="MAE_itemrank")
     plt.plot(k, list_mae_ubknn, "-m", label="MAE_ubknn")
+    plt.xlabel('nfolds')
+    plt.ylabel('MAE')
     plt.legend(loc="upper right")
     plt.title('MSE values for three algorithms')
+    if save_plot:
+        tikzplotlib.save('Latex/graph_mae_k.tex')
     plt.show()
 
     # running time
     plt.plot(k, list_time_baseline, "-r", label="running time baseline")
     plt.plot(k, list_time_itemrank, "-g", label="running time itemrank")
     plt.plot(k, list_time_ubknn, "-m", label="running time ubknn")
+    plt.xlabel('nfolds')
+    plt.ylabel('execution time (s)')
     plt.legend(loc="upper right")
     plt.title('running time for three algorithms')
+    if save_plot:
+        tikzplotlib.save('Latex/graph_time_k.tex')
     plt.show()
 
 
