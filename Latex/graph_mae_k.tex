@@ -1,14 +1,14 @@
 % This file was created by tikzplotlib v0.9.1.
 \begin{tikzpicture}
 
-\definecolor{color0}{rgb}{0.75,0,0.75}
+\definecolor{color0}{rgb}{0.75,0.75,0}
 
 \begin{axis}[
 legend cell align={left},
 legend style={fill opacity=0.8, draw opacity=1, text opacity=1, draw=white!80!black},
 tick align=outside,
 tick pos=left,
-title={MSE values for three algorithms},
+title={MAE values for three algorithms},
 x grid style={white!69.0196078431373!black},
 xlabel={nfolds},
 xmin=0.55, xmax=10.45,
@@ -18,7 +18,7 @@ ylabel={MAE},
 ymin=0.718293974457161, ymax=1.1344145726449,
 ytick style={color=black}
 ]
-\addplot [semithick, red]
+\addplot [semithick, blue]
 table {%
 1 0.823038177572631
 2 0.829598359910736
@@ -32,7 +32,7 @@ table {%
 10 0.825037948713292
 };
 \addlegendentry{MAE_baseline}
-\addplot [semithick, green!50!black]
+\addplot [semithick, color0]
 table {%
 1 1.1117
 2 1.1155
@@ -46,7 +46,7 @@ table {%
 10 1.08960896089609
 };
 \addlegendentry{MAE_itemrank}
-\addplot [semithick, color0]
+\addplot [semithick, red]
 table {%
 1 0.747210704469447
 2 0.754252429756033

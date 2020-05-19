@@ -1,11 +1,11 @@
 % This file was created by tikzplotlib v0.9.1.
 \begin{tikzpicture}
 
-\definecolor{color0}{rgb}{0.75,0,0.75}
+\definecolor{color0}{rgb}{0.75,0.75,0}
 
 \begin{axis}[
 legend cell align={left},
-legend style={fill opacity=0.8, draw opacity=1, text opacity=1, draw=white!80!black},
+legend style={fill opacity=0.8, draw opacity=1, text opacity=1, at={(0.97,0.03)}, anchor=south east, draw=white!80!black},
 tick align=outside,
 tick pos=left,
 title={running time for three algorithms},
@@ -18,7 +18,7 @@ ylabel={execution time (s)},
 ymin=-2.85424687862396, ymax=98.4023158788681,
 ytick style={color=black}
 ]
-\addplot [semithick, red]
+\addplot [semithick, blue]
 table {%
 1 2.2828962802887
 2 1.86600828170776
@@ -32,7 +32,7 @@ table {%
 10 1.7483241558075
 };
 \addlegendentry{running time baseline}
-\addplot [semithick, green!50!black]
+\addplot [semithick, color0]
 table {%
 1 66.9989132881165
 2 74.7070858478546
@@ -46,7 +46,7 @@ table {%
 10 75.0114684104919
 };
 \addlegendentry{running time itemrank}
-\addplot [semithick, color0]
+\addplot [semithick, red]
 table {%
 1 88.6110994815826
 2 93.7997448444366
