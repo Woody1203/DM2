@@ -106,12 +106,17 @@ def kfold_cross_validation(k):
     list_mae_itemrank = []
     list_mse_ubknn = []
     list_mae_ubknn = []
+    list_time_itemrank = []
+    list_time_ubknn = []
+    list_time_baseline = []
     k = []
 
     cv_start_time = time.time()
 
     for train, test in kf.split(links_df):
         print('fold ' + str(i+1))
+
+        k.append(i+1)
 
         ### Preprocessing
         train_set_links = links_df.iloc[train] # select index of the training set
@@ -159,11 +164,12 @@ def kfold_cross_validation(k):
         # performance evaluation on the test set
         mse_test_baseline[i] = compute_MSE(test_set.to_numpy(), prediction_baseline)
         mae_test_baseline[i] = compute_MAE(test_set.to_numpy(), prediction_baseline)
+        list_time_baseline.append(elapsed_time)
         list_mse_baseline.append(mse_test_baseline[i])
         list_mae_baseline.append(mae_test_baseline[i])
         print("testset mse result of baseline", mse_test_baseline[i])
         print("testset mae result of baseline", mae_test_baseline[i])
-        print("baseline fini")
+        print("baseline finish")
         print()
 
         ## performance evaluation on the training set
@@ -212,6 +218,7 @@ def kfold_cross_validation(k):
         # performance evaluation on the test set
         mse_test_itemrank[i] = compute_MSE(test_set.to_numpy(), prediction_itemrank)
         mae_test_itemrank[i] = compute_MAE(test_set.to_numpy(), prediction_itemrank)
+        list_time_itemrank.append(elapsed_time)
         list_mse_itemrank.append(mse_test_itemrank[i])
         list_mae_itemrank.append(mae_test_itemrank[i])
         print("testset mse result of itemrank", mse_test_itemrank[i])
@@ -259,6 +266,7 @@ def kfold_cross_validation(k):
         # performance evaluation on the test set
         mse_test_ubknn[i] = compute_MSE(test_set.to_numpy(), prediction_ubknn)
         mae_test_ubknn[i] = compute_MAE(test_set.to_numpy(), prediction_ubknn)
+        list_time_ubknn.append(elapsed_time)
         list_mse_ubknn.append(mse_test_ubknn[i])
         list_mae_ubknn.append(mae_test_ubknn[i])
         print("testset mse result of ubknn", mse_test_ubknn[i])
@@ -311,32 +319,34 @@ def kfold_cross_validation(k):
     print("mean mae for ubknn", mean_mse_test_ubknn)
     print("mean mae for ubknn", mean_mae_test_ubknn)
 
+    # mse plt
     # baseline results
     plt.plot(k, list_mse_baseline, "-b", label="MSE_baseline")
-    plt.plot(k, list_mae_baseline, "-r", label="MAE_baseline")
-
-    # itemrank results
-    # plt.plot(k, list_mse_itemrank, "-y", label="MSE_itemrank")
-    # plt.plot(k, list_mae_itemrank, "-g", label="MAE_itemrank")
-
+    #itemrank results
+    plt.plot(k, list_mse_itemrank, "-y", label="MSE_itemrank")
     ## ubknn results
     plt.plot(k, list_mse_ubknn, "-c", label="MSE_ubknn")
+    plt.legend(loc="upper right")
+    plt.title('MSE values for three algorithms')
+    plt.show()
+
+    # mae plt
+    plt.plot(k, list_mae_baseline, "-r", label="MAE_baseline")
+    plt.plot(k, list_mae_itemrank, "-g", label="MAE_itemrank")
     plt.plot(k, list_mae_ubknn, "-m", label="MAE_ubknn")
     plt.legend(loc="upper right")
+    plt.title('MSE values for three algorithms')
+    plt.show()
 
-    plt.title('MSE and MAE values for diff algorithms')
+    # running time
+    plt.plot(k, list_time_baseline, "-r", label="running time baseline")
+    plt.plot(k, list_time_itemrank, "-g", label="running time itemrank")
+    plt.plot(k, list_time_ubknn, "-m", label="running time ubknn")
+    plt.legend(loc="upper right")
+    plt.title('running time for three algorithms')
     plt.show()
 
 
 
 if __name__ == '__main__':
-    kfold_cross_validation(4)
-
-'''
-1) cv with plot
-# 2) diff similarity for ubknn
-3) itemrank optimization
-# 4) trainning set prediction maybe
-
-'''
-
+    kfold_cross_validation(10)
